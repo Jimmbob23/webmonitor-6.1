@@ -1,7 +1,5 @@
 # Web Monitor Enterprise 6
 
-Sauberer Neustart ohne V4/V5-Dateimischung.
-
 ## Enthalten
 
 - PostgreSQL
