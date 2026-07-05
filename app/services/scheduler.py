@@ -5,7 +5,7 @@ from app.db import SessionLocal
 from app.models import Site
 from app.services.monitor import run_check
 
-scheduler = BackgroundScheduler(timezone="UTC")
+scheduler = BackgroundScheduler(timezone="Europe/Berlin")
 
 def check_job(site_id: int):
     db = SessionLocal()
@@ -21,8 +21,8 @@ def make_trigger(site: Site):
         parts = site.cron_expression.split()
         if len(parts) == 5:
             minute, hour, day, month, day_of_week = parts
-            return CronTrigger(minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week, timezone="UTC")
-    return IntervalTrigger(seconds=max(site.interval_seconds, 60), timezone="UTC")
+            return CronTrigger(minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week, timezone="Europe/Berlin")
+    return IntervalTrigger(seconds=max(site.interval_seconds, 60), timezone="Europe/Berlin")
 
 def sync_jobs():
     db = SessionLocal()
