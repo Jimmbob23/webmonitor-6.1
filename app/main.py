@@ -1,6 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi import Depends, FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
+from pathlib import Path
+import shutil
+import tempfile
+
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
@@ -9,7 +13,8 @@ from sqlalchemy.orm import Session
 from app.auth import create_session_token, current_user, ensure_admin_user, hash_password, require_admin, require_login, verify_password
 from app.config import settings
 from app.db import SessionLocal, get_db, init_db_with_retry
-from app.models import Change, Folder, Site, User
+from app.models import BackupEntry, Change, Folder, Site, User
+from app.services.backups import create_config_backup, restore_config_backup
 from app.services.monitor import normalize_url, run_check
 from app.services.scheduler import scheduler, start_scheduler, sync_jobs
 
@@ -26,14 +31,14 @@ async def lifespan(app: FastAPI):
     if scheduler.running:
         scheduler.shutdown(wait=False)
 
-app = FastAPI(title="Web Monitor Enterprise 6", version="6.0.0", lifespan=lifespan)
+app = FastAPI(title="Web Monitor Enterprise 6.1", version="6.1.1", lifespan=lifespan)
 app.mount("/data", StaticFiles(directory=str(settings.data_dir)), name="data")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "app": "enterprise-6"}
+    return {"status": "ok", "app": "enterprise-6.1"}
 
 @app.get("/api/stats")
 def api_stats(db: Session = Depends(get_db)):
@@ -181,16 +186,36 @@ def edit_site(
         site.ignore_selectors = ignore_selectors.strip()
         site.cookie_mode = cookie_mode
         site.enabled = enabled == "on"
+        if not site.enabled:
+            site.last_status = "paused"
+        elif site.last_status == "paused":
+            site.last_status = "enabled"
         db.commit()
     sync_jobs()
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
+@app.post("/sites/{site_id}/toggle")
+def toggle_site(site_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = require_login(request, db)
+    if redirect:
+        return redirect
+    site = db.get(Site, site_id)
+    if site:
+        site.enabled = not site.enabled
+        site.last_status = "enabled" if site.enabled else "paused"
+        db.commit()
+    sync_jobs()
+    referer = request.headers.get("referer") or "/"
+    return RedirectResponse(referer, status_code=303)
 
 @app.post("/sites/{site_id}/check")
 def manual_check(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
-    run_check(db, site_id)
+    site = db.get(Site, site_id)
+    if site and site.enabled:
+        run_check(db, site_id)
     sync_jobs()
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
 
@@ -234,3 +259,46 @@ def create_user(request: Request, username: str = Form(...), password: str = For
     db.add(User(username=username.strip(), password_hash=hash_password(password), role=role, active=True))
     db.commit()
     return RedirectResponse("/admin/users", status_code=303)
+
+@app.get("/backups")
+def backups_page(request: Request, db: Session = Depends(get_db)):
+    redirect = require_admin(request, db)
+    if redirect:
+        return redirect
+    backups = db.query(BackupEntry).order_by(BackupEntry.id.desc()).all()
+    return templates.TemplateResponse("backups.html", {"request": request, "backups": backups, "message": ""})
+
+@app.post("/backups/create")
+def backup_create(request: Request, db: Session = Depends(get_db)):
+    redirect = require_admin(request, db)
+    if redirect:
+        return redirect
+    create_config_backup(db)
+    return RedirectResponse("/backups", status_code=303)
+
+@app.get("/backups/{backup_id}/download")
+def backup_download(backup_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = require_admin(request, db)
+    if redirect:
+        return redirect
+    backup = db.get(BackupEntry, backup_id)
+    if not backup:
+        return RedirectResponse("/backups", status_code=303)
+    return FileResponse(settings.backup_dir / backup.filename, filename=backup.filename, media_type="text/csv")
+
+@app.post("/backups/restore")
+async def backup_restore(request: Request, file: UploadFile = File(...), replace_existing: str | None = Form(None), db: Session = Depends(get_db)):
+    redirect = require_admin(request, db)
+    if redirect:
+        return redirect
+    suffix = Path(file.filename or "restore.csv").suffix or ".csv"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp_path = Path(tmp.name)
+        shutil.copyfileobj(file.file, tmp)
+    try:
+        count = restore_config_backup(db, tmp_path, replace_existing=(replace_existing == "on"))
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    sync_jobs()
+    backups = db.query(BackupEntry).order_by(BackupEntry.id.desc()).all()
+    return templates.TemplateResponse("backups.html", {"request": request, "backups": backups, "message": f"{count} Monitor(e) wiederhergestellt."})

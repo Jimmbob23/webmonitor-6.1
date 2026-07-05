@@ -1,25 +1,25 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: wm-e6-postgres
+    container_name: wm-e61-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: webmonitor
       POSTGRES_USER: webmonitor
       POSTGRES_PASSWORD: bitte-aendern
     volumes:
-      - wm_e6_postgres:/var/lib/postgresql/data
+      - wm_e61_postgres:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
-    container_name: wm-e6-redis
+    container_name: wm-e61-redis
     restart: unless-stopped
     volumes:
-      - wm_e6_redis:/data
+      - wm_e61_redis:/data
 
   web-monitor:
-    image: ghcr.io/DEIN-GITHUB-BENUTZERNAME/web-monitor-enterprise-6:latest
-    container_name: web-monitor-enterprise-6
+    image: ghcr.io/jimmbob23/web-monitor-enterprise-6-1:latest
+    container_name: web-monitor-enterprise-6-1
     restart: unless-stopped
     depends_on:
       - postgres
@@ -27,7 +27,7 @@ services:
     ports:
       - "8005:8000"
     volumes:
-      - wm_e6_data:/app/data
+      - wm_e61_data:/app/data
     environment:
       DATABASE_URL: postgresql+psycopg2://webmonitor:bitte-aendern@postgres:5432/webmonitor
       REDIS_URL: redis://redis:6379/0
@@ -35,8 +35,13 @@ services:
       APP_SECRET: bitte-unbedingt-aendern
       ADMIN_USER: admin
       ADMIN_PASSWORD: admin123
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  wm_e6_postgres:
-  wm_e6_redis:
-  wm_e6_data:
+  wm_e61_postgres:
+  wm_e61_redis:
+  wm_e61_data:

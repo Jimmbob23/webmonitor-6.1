@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import User
 
-serializer = URLSafeSerializer(settings.app_secret, salt="enterprise6")
+serializer = URLSafeSerializer(settings.app_secret, salt="enterprise61")
 hasher = PasswordHasher()
 
 def hash_password(password: str) -> str:

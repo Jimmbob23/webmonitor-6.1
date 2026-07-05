@@ -3,8 +3,21 @@
 {% if not site %}
 <div class="alert alert-danger">Nicht gefunden</div>
 {% else %}
-<h1>{{site.name}}</h1>
-<p><a href="{{site.url}}" target="_blank">{{site.url}}</a></p>
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1>{{site.name}}</h1>
+    <p><a href="{{site.url}}" target="_blank">{{site.url}}</a></p>
+    {% if not site.enabled %}<span class="badge text-bg-secondary">Monitor pausiert</span>{% endif %}
+  </div>
+  <form method="post" action="/sites/{{site.id}}/toggle">
+    {% if site.enabled %}
+    <button class="btn btn-warning">Monitor pausieren</button>
+    {% else %}
+    <button class="btn btn-success">Monitor aktivieren</button>
+    {% endif %}
+  </form>
+</div>
+
 {% if site.last_error %}<div class="alert alert-danger">{{site.last_error}}</div>{% endif %}
 
 <div class="card mb-4">
@@ -37,8 +50,12 @@
   </div>
 </div>
 
-<form method="post" action="/sites/{{site.id}}/check" class="d-inline"><button class="btn btn-primary">Jetzt prüfen</button></form>
-<form method="post" action="/sites/{{site.id}}/reset-baseline" class="d-inline"><button class="btn btn-warning">Baseline reset</button></form>
+<form method="post" action="/sites/{{site.id}}/check" class="d-inline">
+  <button class="btn btn-primary" {% if not site.enabled %}disabled title="Monitor ist pausiert"{% endif %}>Jetzt prüfen</button>
+</form>
+<form method="post" action="/sites/{{site.id}}/reset-baseline" class="d-inline">
+  <button class="btn btn-warning">Baseline reset</button>
+</form>
 
 <div class="row g-3 mt-3">
 {% for c in changes %}

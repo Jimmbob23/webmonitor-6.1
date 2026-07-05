@@ -41,19 +41,43 @@
 </div>
 
 <table class="table table-darkish align-middle">
-<thead><tr><th>Name</th><th>URL</th><th>Tags</th><th>Plan</th><th>Status</th><th>Antwort</th><th>Aktionen</th></tr></thead>
+<thead>
+<tr>
+  <th>Name</th>
+  <th>URL</th>
+  <th>Tags</th>
+  <th>Plan</th>
+  <th>Status</th>
+  <th>Antwort</th>
+  <th>Aktionen</th>
+</tr>
+</thead>
 <tbody>
 {% for s in sites %}
-<tr>
-  <td><a href="/sites/{{s.id}}">{{s.name}}</a></td>
+<tr class="{% if not s.enabled %}opacity-50{% endif %}">
+  <td>
+    <a href="/sites/{{s.id}}">{{s.name}}</a>
+    {% if not s.enabled %}<span class="badge text-bg-secondary ms-1">pausiert</span>{% endif %}
+  </td>
   <td class="text-break">{{s.url}}</td>
   <td>{{s.tags_csv}}</td>
   <td>{{s.schedule_type}} {% if s.schedule_type=="interval" %}{{s.interval_seconds}}s{% else %}{{s.cron_expression}}{% endif %}</td>
   <td><span class="badge status-{{s.last_status|replace(' ', '-')}}">{{s.last_status}}</span></td>
   <td>{{s.last_duration_ms}} ms / HTTP {{s.last_http_status}}</td>
-  <td>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/check"><button class="btn btn-sm btn-outline-primary">Prüfen</button></form>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')"><button class="btn btn-sm btn-outline-danger">Löschen</button></form>
+  <td class="text-nowrap">
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/check">
+      <button class="btn btn-sm btn-outline-primary" {% if not s.enabled %}disabled title="Monitor ist pausiert"{% endif %}>Prüfen</button>
+    </form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/toggle">
+      {% if s.enabled %}
+      <button class="btn btn-sm btn-outline-warning">Pausieren</button>
+      {% else %}
+      <button class="btn btn-sm btn-outline-success">Aktivieren</button>
+      {% endif %}
+    </form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')">
+      <button class="btn btn-sm btn-outline-danger">Löschen</button>
+    </form>
   </td>
 </tr>
 {% endfor %}

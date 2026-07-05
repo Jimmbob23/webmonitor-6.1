@@ -1,0 +1,4 @@
+toggle_route: True
+index_toggle: True
+site_toggle: True
+latest_tag: True

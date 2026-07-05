@@ -62,19 +62,6 @@ class Change(Base):
     error: Mapped[str] = mapped_column(Text, default="")
     site = relationship("Site", back_populates="changes")
 
-class NotificationChannel(Base):
-    __tablename__ = "notification_channels"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    channel_type: Mapped[str] = mapped_column(String(50))
-    target: Mapped[str] = mapped_column(Text, default="")
-    smtp_host: Mapped[str] = mapped_column(String(200), default="")
-    smtp_port: Mapped[int] = mapped_column(Integer, default=587)
-    smtp_user: Mapped[str] = mapped_column(String(200), default="")
-    smtp_password: Mapped[str] = mapped_column(Text, default="")
-    email_to: Mapped[str] = mapped_column(Text, default="")
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-
 class BackupEntry(Base):
     __tablename__ = "backup_entries"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

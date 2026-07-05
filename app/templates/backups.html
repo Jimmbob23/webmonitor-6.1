@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Backups & Restore</h1>
+{% if message %}<div class="alert alert-success">{{ message }}</div>{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">Backup erstellen</div>
+      <div class="card-body">
+        <p>Sichert alle Monitore als CSV inklusive Intervall, Cron, Tags, Cookie-Modus und Ignore-Selektoren.</p>
+        <form method="post" action="/backups/create">
+          <button class="btn btn-primary">Backup erstellen</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">Backup wiederherstellen</div>
+      <div class="card-body">
+        <form method="post" action="/backups/restore" enctype="multipart/form-data">
+          <input class="form-control mb-3" type="file" name="file" accept=".csv" required>
+          <label class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="replace_existing">
+            <span class="form-check-label">Bestehende Monitore vorher löschen</span>
+          </label>
+          <button class="btn btn-warning">Restore starten</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="mt-4">Vorhandene Backups</h2>
+<table class="table table-darkish">
+<thead><tr><th>Zeit</th><th>Datei</th><th>Aktion</th></tr></thead>
+<tbody>
+{% for b in backups %}
+<tr>
+  <td>{{ b.created_at }}</td>
+  <td>{{ b.filename }}</td>
+  <td><a class="btn btn-sm btn-outline-info" href="/backups/{{b.id}}/download">Download</a></td>
+</tr>
+{% else %}
+<tr><td colspan="3" class="text-muted">Noch keine Backups vorhanden.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
