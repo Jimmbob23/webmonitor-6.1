@@ -40,12 +40,5 @@ admin
 admin123
 ```
 
-## Portainer
 
-In `stack.portainer.yml` ändern:
 
-```yaml
-image: ghcr.io/DEIN-GITHUB-BENUTZERNAME/web-monitor-enterprise-6:latest
-```
-
-Dann über GitHub Actions bauen lassen, Package öffentlich machen und deployen.
