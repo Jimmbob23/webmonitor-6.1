@@ -38,7 +38,7 @@
 <tbody>
 {% for b in backups %}
 <tr>
-  <td>{{ b.created_at }}</td>
+  <td>{{ b.created_at|berlin_time }}</td>
   <td>{{ b.filename }}</td>
   <td><a class="btn btn-sm btn-outline-info" href="/backups/{{b.id}}/download">Download</a></td>
 </tr>

@@ -61,7 +61,7 @@
 {% for c in changes %}
 <div class="col-lg-4">
   <div class="card h-100">
-    <div class="card-header">{{c.checked_at}} · {{c.status}}</div>
+    <div class="card-header">{{ c.checked_at|berlin_time }} · {{c.status}}</div>
     <div class="card-body">
       <p>Diff: {{c.difference_percent}}% · {{c.duration_ms}}ms · HTTP {{c.http_status}}</p>
       <p>{{c.relevance_reason}}</p>

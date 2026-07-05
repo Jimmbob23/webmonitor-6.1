@@ -90,7 +90,7 @@
 <tbody>
 {% for c in changes %}
 <tr>
-  <td>{{c.checked_at}}</td>
+  <td>{{ c.checked_at|berlin_time }}</td>
   <td>{{c.site.name}}</td>
   <td>{{c.status}}</td>
   <td>{{c.difference_percent}}%</td>

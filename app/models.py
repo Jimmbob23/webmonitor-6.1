@@ -1,5 +1,4 @@
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
@@ -11,7 +10,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(Text)
     role: Mapped[str] = mapped_column(String(20), default="user")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("Europe/Berlin")))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 class Folder(Base):
     __tablename__ = "folders"
@@ -42,7 +41,7 @@ class Site(Base):
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_duration_ms: Mapped[int] = mapped_column(Integer, default=0)
     last_http_status: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("Europe/Berlin")))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     folder = relationship("Folder", back_populates="sites")
     changes = relationship("Change", back_populates="site", cascade="all, delete-orphan")
 
@@ -50,7 +49,7 @@ class Change(Base):
     __tablename__ = "changes"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"), index=True)
-    checked_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("Europe/Berlin")))
+    checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     status: Mapped[str] = mapped_column(String(50), default="ok")
     changed: Mapped[bool] = mapped_column(Boolean, default=False)
     relevant: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -67,4 +66,4 @@ class BackupEntry(Base):
     __tablename__ = "backup_entries"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     filename: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("Europe/Berlin")))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

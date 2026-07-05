@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import shutil
 import tempfile
 
@@ -34,7 +36,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Web Monitor Enterprise 6.1", version="6.1.1", lifespan=lifespan)
 app.mount("/data", StaticFiles(directory=str(settings.data_dir)), name="data")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 templates = Jinja2Templates(directory="app/templates")
+
+def berlin_time(value):
+    if not value:
+        return ""
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value)
+        except Exception:
+            return value
+
+    # Datenbank-Zeiten sind bisher meist naive UTC-Zeiten.
+    # Deshalb: naive Werte als UTC interpretieren und für die Anzeige nach Berlin konvertieren.
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=ZoneInfo("UTC"))
+
+    return value.astimezone(ZoneInfo("Europe/Berlin")).strftime("%d.%m.%Y %H:%M:%S")
+
+templates.env.filters["berlin_time"] = berlin_time
+
 
 @app.get("/health")
 def health():

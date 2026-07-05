@@ -1,5 +1,4 @@
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from pathlib import Path
 from app.config import settings
 from app.models import Site, Change
@@ -30,10 +29,10 @@ def run_check(db, site_id: int) -> Change:
         raise ValueError("Site not found")
 
     site.url = normalize_url(site.url)
-    stamp = datetime.now(ZoneInfo("Europe/Berlin")).strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     shot = settings.screenshot_dir / f"site-{site.id}" / f"{stamp}.png"
     diff = settings.diff_dir / f"site-{site.id}" / f"{stamp}.png"
-    change = Change(site_id=site.id, checked_at=datetime.now(ZoneInfo("Europe/Berlin")))
+    change = Change(site_id=site.id, checked_at=datetime.utcnow())
 
     try:
         http_status, duration_ms = capture_screenshot(
@@ -84,7 +83,7 @@ def run_check(db, site_id: int) -> Change:
         site.last_status = "error"
         site.last_error = str(exc)
 
-    site.last_checked_at = datetime.now(ZoneInfo("Europe/Berlin"))
+    site.last_checked_at = datetime.utcnow()
     db.add(change)
     db.commit()
     db.refresh(change)
