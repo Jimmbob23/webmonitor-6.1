@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wm-e6-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: webmonitor
+      POSTGRES_USER: webmonitor
+      POSTGRES_PASSWORD: bitte-aendern
+    volumes:
+      - wm_e6_postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: wm-e6-redis
+    restart: unless-stopped
+    volumes:
+      - wm_e6_redis:/data
+
+  web-monitor:
+    image: ghcr.io/DEIN-GITHUB-BENUTZERNAME/web-monitor-enterprise-6:latest
+    container_name: web-monitor-enterprise-6
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8005:8000"
+    volumes:
+      - wm_e6_data:/app/data
+    environment:
+      DATABASE_URL: postgresql+psycopg2://webmonitor:bitte-aendern@postgres:5432/webmonitor
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /app/data
+      APP_SECRET: bitte-unbedingt-aendern
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: admin123
+
+volumes:
+  wm_e6_postgres:
+  wm_e6_redis:
+  wm_e6_data:

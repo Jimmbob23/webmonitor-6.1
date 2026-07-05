@@ -1,0 +1,17 @@
+body{background:#111827;color:#e5e7eb}
+a{color:#93c5fd}
+.card,.table-darkish,.stat{background:#1f2937;color:#e5e7eb;border:1px solid #374151}
+.card-header{background:#111827;border-color:#374151}
+.form-control,.form-select{background:#111827;color:#e5e7eb;border-color:#4b5563}
+.form-control:focus,.form-select:focus{background:#111827;color:white}
+.stat{padding:1rem;border-radius:.5rem}
+.stat strong{font-size:2rem}
+.login-page{min-height:100vh;display:grid;place-items:center}
+.login-card{width:min(420px,92vw)}
+.badge.status-never{background:#6b7280}
+.badge.status-baseline{background:#06b6d4}
+.badge.status-unchanged{background:#16a34a}
+.badge.status-changed{background:#dc2626}
+.badge.status-error{background:#f97316}
+.badge.status-baseline-reset{background:#facc15;color:#111827}
+pre{white-space:pre-wrap}

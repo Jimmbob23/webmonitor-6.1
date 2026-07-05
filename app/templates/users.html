@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Benutzer</h1>
+<form method="post" action="/admin/users" class="row g-2 mb-4">
+  <input class="form-control col" name="username" placeholder="Benutzername">
+  <input class="form-control col" name="password" type="password" placeholder="Passwort">
+  <select class="form-select col" name="role">
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button class="btn btn-primary col">Anlegen</button>
+</form>
+<table class="table table-darkish">
+<tr><th>ID</th><th>Name</th><th>Rolle</th><th>Aktiv</th></tr>
+{% for u in users %}
+<tr><td>{{u.id}}</td><td>{{u.username}}</td><td>{{u.role}}</td><td>{{u.active}}</td></tr>
+{% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not site %}
+<div class="alert alert-danger">Nicht gefunden</div>
+{% else %}
+<h1>{{site.name}}</h1>
+<p><a href="{{site.url}}" target="_blank">{{site.url}}</a></p>
+{% if site.last_error %}<div class="alert alert-danger">{{site.last_error}}</div>{% endif %}
+
+<div class="card mb-4">
+  <div class="card-header">Monitor bearbeiten</div>
+  <div class="card-body">
+    <form method="post" action="/sites/{{site.id}}/edit" class="row g-2">
+      <input class="form-control col" name="name" value="{{site.name}}">
+      <input class="form-control col" name="url" value="{{site.url}}">
+      <input class="form-control col" name="tags_csv" value="{{site.tags_csv}}">
+      <select class="form-select col" name="schedule_type">
+        <option value="interval" {% if site.schedule_type=="interval" %}selected{% endif %}>Intervall</option>
+        <option value="cron" {% if site.schedule_type=="cron" %}selected{% endif %}>Cron</option>
+      </select>
+      <input class="form-control col" name="interval_seconds" type="number" value="{{site.interval_seconds}}">
+      <input class="form-control col" name="cron_expression" value="{{site.cron_expression}}">
+      <input class="form-control col" name="threshold_percent" type="number" step="0.01" value="{{site.threshold_percent}}">
+      <input class="form-control col" name="wait_seconds" type="number" value="{{site.wait_seconds}}">
+      <input class="form-control col" name="viewport_width" type="number" value="{{site.viewport_width}}">
+      <input class="form-control col" name="viewport_height" type="number" value="{{site.viewport_height}}">
+      <select class="form-select col" name="cookie_mode">
+        <option value="auto" {% if site.cookie_mode=="auto" %}selected{% endif %}>Cookies auto</option>
+        <option value="click" {% if site.cookie_mode=="click" %}selected{% endif %}>nur klicken</option>
+        <option value="hide" {% if site.cookie_mode=="hide" %}selected{% endif %}>nur ausblenden</option>
+        <option value="off" {% if site.cookie_mode=="off" %}selected{% endif %}>aus</option>
+      </select>
+      <input class="form-control col-12" name="ignore_selectors" value="{{site.ignore_selectors}}">
+      <label><input type="checkbox" name="enabled" {% if site.enabled %}checked{% endif %}> Aktiv</label>
+      <button class="btn btn-primary col-12">Speichern</button>
+    </form>
+  </div>
+</div>
+
+<form method="post" action="/sites/{{site.id}}/check" class="d-inline"><button class="btn btn-primary">Jetzt prüfen</button></form>
+<form method="post" action="/sites/{{site.id}}/reset-baseline" class="d-inline"><button class="btn btn-warning">Baseline reset</button></form>
+
+<div class="row g-3 mt-3">
+{% for c in changes %}
+<div class="col-lg-4">
+  <div class="card h-100">
+    <div class="card-header">{{c.checked_at}} · {{c.status}}</div>
+    <div class="card-body">
+      <p>Diff: {{c.difference_percent}}% · {{c.duration_ms}}ms · HTTP {{c.http_status}}</p>
+      <p>{{c.relevance_reason}}</p>
+      {% if c.error %}<pre class="text-danger">{{c.error}}</pre>{% endif %}
+      {% if c.screenshot_path %}<a href="{{c.screenshot_path}}" target="_blank"><img class="img-fluid rounded border" src="{{c.screenshot_path}}"></a>{% endif %}
+      {% if c.diff_path %}<p class="mt-2"><a class="btn btn-sm btn-outline-danger" href="{{c.diff_path}}" target="_blank">Diff öffnen</a></p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

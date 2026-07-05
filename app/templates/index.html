@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="stat">Monitore<br><strong>{{stats.sites}}</strong></div></div>
+  <div class="col-md-3"><div class="stat">Aktiv<br><strong>{{stats.enabled}}</strong></div></div>
+  <div class="col-md-3"><div class="stat">Änderungen<br><strong>{{stats.changed}}</strong></div></div>
+  <div class="col-md-3"><div class="stat">Fehler<br><strong>{{stats.errors}}</strong></div></div>
+</div>
+
+<form class="mb-3" method="get" action="/">
+  <div class="input-group">
+    <input class="form-control" name="q" value="{{q}}" placeholder="Suche nach Name, URL oder Tag">
+    <button class="btn btn-outline-primary">Suchen</button>
+  </div>
+</form>
+
+<div class="card mb-4">
+  <div class="card-header">Neue Webseite überwachen</div>
+  <div class="card-body">
+    <form method="post" action="/sites" class="row g-2">
+      <input class="form-control col" name="name" placeholder="Name">
+      <input class="form-control col" name="url" placeholder="svbwl.de" required>
+      <input class="form-control col" name="folder_name" placeholder="Ordner">
+      <input class="form-control col" name="tags_csv" placeholder="Tags">
+      <select class="form-select col" name="schedule_type">
+        <option value="interval">Intervall</option>
+        <option value="cron">Cron</option>
+      </select>
+      <input class="form-control col" name="interval_seconds" type="number" value="300">
+      <input class="form-control col" name="cron_expression" placeholder="*/10 * * * *">
+      <input class="form-control col" name="threshold_percent" type="number" step="0.01" value="0.50">
+      <select class="form-select col" name="cookie_mode">
+        <option value="auto">Cookies auto</option>
+        <option value="click">nur klicken</option>
+        <option value="hide">nur ausblenden</option>
+        <option value="off">aus</option>
+      </select>
+      <button class="btn btn-primary col">Anlegen</button>
+    </form>
+  </div>
+</div>
+
+<table class="table table-darkish align-middle">
+<thead><tr><th>Name</th><th>URL</th><th>Tags</th><th>Plan</th><th>Status</th><th>Antwort</th><th>Aktionen</th></tr></thead>
+<tbody>
+{% for s in sites %}
+<tr>
+  <td><a href="/sites/{{s.id}}">{{s.name}}</a></td>
+  <td class="text-break">{{s.url}}</td>
+  <td>{{s.tags_csv}}</td>
+  <td>{{s.schedule_type}} {% if s.schedule_type=="interval" %}{{s.interval_seconds}}s{% else %}{{s.cron_expression}}{% endif %}</td>
+  <td><span class="badge status-{{s.last_status|replace(' ', '-')}}">{{s.last_status}}</span></td>
+  <td>{{s.last_duration_ms}} ms / HTTP {{s.last_http_status}}</td>
+  <td>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/check"><button class="btn btn-sm btn-outline-primary">Prüfen</button></form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')"><button class="btn btn-sm btn-outline-danger">Löschen</button></form>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h2>Letzte Ereignisse</h2>
+<table class="table table-darkish">
+<thead><tr><th>Zeit</th><th>Seite</th><th>Status</th><th>Diff</th><th>Relevanz</th></tr></thead>
+<tbody>
+{% for c in changes %}
+<tr>
+  <td>{{c.checked_at}}</td>
+  <td>{{c.site.name}}</td>
+  <td>{{c.status}}</td>
+  <td>{{c.difference_percent}}%</td>
+  <td>{{c.relevance_reason}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
