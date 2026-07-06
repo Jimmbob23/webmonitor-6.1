@@ -17,67 +17,76 @@
 <div class="card mb-4">
   <div class="card-header">Neue Webseite überwachen</div>
   <div class="card-body">
-    <form method="post" action="/sites" class="row g-2">
-      <input class="form-control col" name="name" placeholder="Name">
-      <input class="form-control col" name="url" placeholder="svbwl.de" required>
-      <input class="form-control col" name="folder_name" placeholder="Ordner">
-      <input class="form-control col" name="tags_csv" placeholder="Tags">
-      <select class="form-select col" name="schedule_type">
-        <option value="interval">Intervall</option>
-        <option value="cron">Cron</option>
-      </select>
-      <input class="form-control col" name="interval_seconds" type="number" value="300">
-      <input class="form-control col" name="cron_expression" placeholder="*/10 * * * *">
-      <input class="form-control col" name="threshold_percent" type="number" step="0.01" value="0.50">
-      <select class="form-select col" name="cookie_mode">
-        <option value="auto">Cookies auto</option>
-        <option value="click">nur klicken</option>
-        <option value="hide">nur ausblenden</option>
-        <option value="off">aus</option>
-      </select>
-      <button class="btn btn-primary col">Anlegen</button>
+    <form method="post" action="/sites">
+      <h5>1. Allgemein</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><label class="form-label">Name</label><input class="form-control" name="name" placeholder="z. B. SVBWL"></div>
+        <div class="col-md-4"><label class="form-label">Webseite / URL</label><input class="form-control" name="url" placeholder="z. B. svbwl.de" required><div class="form-text text-secondary">https:// wird automatisch ergänzt.</div></div>
+        <div class="col-md-2"><label class="form-label">Ordner</label><input class="form-control" name="folder_name" placeholder="z. B. Behörden"></div>
+        <div class="col-md-3"><label class="form-label">Tags</label><input class="form-control" name="tags_csv" placeholder="z. B. Schule, Termine"></div>
+      </div>
+
+      <h5>2. Zeitplan</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Zeitplan-Typ</label>
+          <select class="form-select" name="schedule_type">
+            <option value="interval">Intervall</option>
+            <option value="cron">Cron</option>
+          </select>
+          <div class="form-text text-secondary">Für feste Zeiten „Cron“ auswählen.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Intervall in Sekunden</label>
+          <input class="form-control" name="interval_seconds" type="number" value="300">
+          <div class="form-text text-secondary">Nur bei Intervall. Minimum 60 Sekunden.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Cron-Ausdruck hier eintragen</label>
+          <input class="form-control" name="cron_expression" placeholder="*/10 * * * *">
+          <div class="form-text text-secondary">
+            Nur bei Zeitplan-Typ „Cron“. Format: Minute Stunde Tag Monat Wochentag.
+            Beispiele: <code>*/5 * * * *</code> alle 5 Minuten,
+            <code>0 8 * * *</code> täglich 08:00,
+            <code>0 9 * * 1-5</code> Mo-Fr 09:00.
+          </div>
+        </div>
+      </div>
+
+      <h5>3. Screenshot & Cookiebanner</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><label class="form-label">Cookie-Modus</label><select class="form-select" name="cookie_mode"><option value="auto">Cookies auto</option><option value="click">nur klicken</option><option value="hide">nur ausblenden</option><option value="off">aus</option></select></div>
+        <div class="col-md-3"><label class="form-label">Wartezeit nach Laden</label><input class="form-control" name="wait_seconds" type="number" value="2"></div>
+        <div class="col-md-3"><label class="form-label">Screenshot-Breite</label><input class="form-control" name="viewport_width" type="number" value="1440"></div>
+        <div class="col-md-3"><label class="form-label">Screenshot-Höhe</label><input class="form-control" name="viewport_height" type="number" value="1200"></div>
+      </div>
+
+      <h5>4. Änderungserkennung</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><label class="form-label">Schwellenwert in Prozent</label><input class="form-control" name="threshold_percent" type="number" step="0.01" value="0.50"></div>
+        <div class="col-md-9"><label class="form-label">Elemente ignorieren / ausblenden</label><input class="form-control" name="ignore_selectors" placeholder=".werbung, #banner, .newsletter"><div class="form-text text-secondary">CSS-Selektoren kommasepariert.</div></div>
+      </div>
+
+      <button class="btn btn-primary">Monitor anlegen</button>
     </form>
   </div>
 </div>
 
 <table class="table table-darkish align-middle">
-<thead>
-<tr>
-  <th>Name</th>
-  <th>URL</th>
-  <th>Tags</th>
-  <th>Plan</th>
-  <th>Status</th>
-  <th>Antwort</th>
-  <th>Aktionen</th>
-</tr>
-</thead>
+<thead><tr><th>Name</th><th>URL</th><th>Tags</th><th>Plan</th><th>Status</th><th>Antwort</th><th>Aktionen</th></tr></thead>
 <tbody>
 {% for s in sites %}
 <tr class="{% if not s.enabled %}opacity-50{% endif %}">
-  <td>
-    <a href="/sites/{{s.id}}">{{s.name}}</a>
-    {% if not s.enabled %}<span class="badge text-bg-secondary ms-1">pausiert</span>{% endif %}
-  </td>
+  <td><a href="/sites/{{s.id}}">{{s.name}}</a>{% if not s.enabled %}<span class="badge text-bg-secondary ms-1">pausiert</span>{% endif %}</td>
   <td class="text-break">{{s.url}}</td>
   <td>{{s.tags_csv}}</td>
   <td>{{s.schedule_type}} {% if s.schedule_type=="interval" %}{{s.interval_seconds}}s{% else %}{{s.cron_expression}}{% endif %}</td>
   <td><span class="badge status-{{s.last_status|replace(' ', '-')}}">{{s.last_status}}</span></td>
   <td>{{s.last_duration_ms}} ms / HTTP {{s.last_http_status}}</td>
   <td class="text-nowrap">
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/check">
-      <button class="btn btn-sm btn-outline-primary" {% if not s.enabled %}disabled title="Monitor ist pausiert"{% endif %}>Prüfen</button>
-    </form>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/toggle">
-      {% if s.enabled %}
-      <button class="btn btn-sm btn-outline-warning">Pausieren</button>
-      {% else %}
-      <button class="btn btn-sm btn-outline-success">Aktivieren</button>
-      {% endif %}
-    </form>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')">
-      <button class="btn btn-sm btn-outline-danger">Löschen</button>
-    </form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/check"><button class="btn btn-sm btn-outline-primary" {% if not s.enabled %}disabled{% endif %}>Prüfen</button></form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/toggle">{% if s.enabled %}<button class="btn btn-sm btn-outline-warning">Pausieren</button>{% else %}<button class="btn btn-sm btn-outline-success">Aktivieren</button>{% endif %}</form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')"><button class="btn btn-sm btn-outline-danger">Löschen</button></form>
   </td>
 </tr>
 {% endfor %}
@@ -89,13 +98,7 @@
 <thead><tr><th>Zeit</th><th>Seite</th><th>Status</th><th>Diff</th><th>Relevanz</th></tr></thead>
 <tbody>
 {% for c in changes %}
-<tr>
-  <td>{{ c.checked_at|berlin_time }}</td>
-  <td>{{c.site.name}}</td>
-  <td>{{c.status}}</td>
-  <td>{{c.difference_percent}}%</td>
-  <td>{{c.relevance_reason}}</td>
-</tr>
+<tr><td>{{ c.checked_at|berlin_time }}</td><td>{{c.site.name}}</td><td>{{c.status}}</td><td>{{c.difference_percent}}%</td><td>{{c.relevance_reason}}</td></tr>
 {% endfor %}
 </tbody>
 </table>
