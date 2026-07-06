@@ -30,7 +30,7 @@
       <div class="row g-3 mb-4">
         <div class="col-md-3">
           <label class="form-label">Zeitplan-Typ</label>
-          <select class="form-select" name="schedule_type">
+          <select class="form-select schedule-type" name="schedule_type">
             <option value="interval">Intervall</option>
             <option value="cron">Cron</option>
           </select>
@@ -39,21 +39,53 @@
         <div class="col-md-3">
           <label class="form-label">Intervall in Sekunden</label>
           <input class="form-control" name="interval_seconds" type="number" value="300">
-          <div class="form-text text-secondary">Nur bei Intervall. Minimum 60 Sekunden.</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Cron-Ausdruck hier eintragen</label>
-          <input class="form-control" name="cron_expression" placeholder="*/10 * * * *">
-          <div class="form-text text-secondary">
-            Nur bei Zeitplan-Typ „Cron“. Format: Minute Stunde Tag Monat Wochentag.
-            Beispiele: <code>*/5 * * * *</code> alle 5 Minuten,
-            <code>0 8 * * *</code> täglich 08:00,
-            <code>0 9 * * 1-5</code> Mo-Fr 09:00.
-          </div>
+          <label class="form-label">Cron-Ausdruck</label>
+          <input class="form-control cron-expression" name="cron_expression" placeholder="*/10 * * * *">
+          <div class="form-text text-secondary">Wird automatisch vom Cron-Generator befüllt oder manuell eingetragen.</div>
         </div>
       </div>
 
-      <h5>3. Screenshot & Cookiebanner</h5>
+<div class="cron-helper mt-3 p-3 rounded border">
+  <h6>Cron-Generator</h6>
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Vorlage</label>
+      <select class="form-select cron-preset">
+        <option value="">Bitte wählen</option>
+        <option value="every_minutes">Alle X Minuten</option>
+        <option value="hourly_range">Stündlich im Zeitraum</option>
+        <option value="daily_time">Täglich um Uhrzeit</option>
+        <option value="weekdays_time">Mo-Fr um Uhrzeit</option>
+        <option value="weekdays_range">Mo-Fr stündlich im Zeitraum</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">X Minuten</label>
+      <input class="form-control cron-minutes" type="number" min="1" max="59" value="10">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Uhrzeit / Start</label>
+      <input class="form-control cron-hour-start" type="number" min="0" max="23" value="8">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Ende</label>
+      <input class="form-control cron-hour-end" type="number" min="0" max="23" value="18">
+    </div>
+    <div class="col-md-3">
+      <button type="button" class="btn btn-outline-info w-100 cron-apply">Cron übernehmen</button>
+    </div>
+  </div>
+  <div class="form-text mt-2">
+    Beispiele: <code>*/5 * * * *</code> alle 5 Minuten,
+    <code>0 8 * * *</code> täglich 08:00,
+    <code>0 10-22 * * 1-5</code> Mo-Fr jede volle Stunde von 10-22 Uhr.
+  </div>
+</div>
+
+
+      <h5 class="mt-4">3. Screenshot & Cookiebanner</h5>
       <div class="row g-3 mb-4">
         <div class="col-md-3"><label class="form-label">Cookie-Modus</label><select class="form-select" name="cookie_mode"><option value="auto">Cookies auto</option><option value="click">nur klicken</option><option value="hide">nur ausblenden</option><option value="off">aus</option></select></div>
         <div class="col-md-3"><label class="form-label">Wartezeit nach Laden</label><input class="form-control" name="wait_seconds" type="number" value="2"></div>
@@ -64,9 +96,8 @@
       <h5>4. Änderungserkennung</h5>
       <div class="row g-3 mb-4">
         <div class="col-md-3"><label class="form-label">Schwellenwert in Prozent</label><input class="form-control" name="threshold_percent" type="number" step="0.01" value="0.50"></div>
-        <div class="col-md-9"><label class="form-label">Elemente ignorieren / ausblenden</label><input class="form-control" name="ignore_selectors" placeholder=".werbung, #banner, .newsletter"><div class="form-text text-secondary">CSS-Selektoren kommasepariert.</div></div>
+        <div class="col-md-9"><label class="form-label">Elemente ignorieren / ausblenden</label><input class="form-control" name="ignore_selectors" placeholder=".werbung, #banner, .newsletter"></div>
       </div>
-
       <button class="btn btn-primary">Monitor anlegen</button>
     </form>
   </div>
@@ -102,4 +133,5 @@
 {% endfor %}
 </tbody>
 </table>
+<script src="/static/cron-generator.js"></script>
 {% endblock %}
