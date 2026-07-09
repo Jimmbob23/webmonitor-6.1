@@ -3,85 +3,65 @@
 {% if not site %}
 <div class="alert alert-danger">Nicht gefunden</div>
 {% else %}
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3 mb-3">
   <div>
-    <h1>{{site.name}}</h1>
-    <p><a href="{{site.url}}" target="_blank">{{site.url}}</a></p>
+    <h1 class="h2">{{site.name}}</h1>
+    <p class="text-break"><a href="{{site.url}}" target="_blank">{{site.url}}</a></p>
     {% if not site.enabled %}<span class="badge text-bg-secondary">Monitor pausiert</span>{% endif %}
   </div>
-  <form method="post" action="/sites/{{site.id}}/toggle">{% if site.enabled %}<button class="btn btn-warning">Monitor pausieren</button>{% else %}<button class="btn btn-success">Monitor aktivieren</button>{% endif %}</form>
+  <div class="d-flex flex-wrap gap-2">
+    <form method="post" action="/sites/{{site.id}}/toggle">
+      {% if site.enabled %}<button class="btn btn-warning">Monitor pausieren</button>{% else %}<button class="btn btn-success">Monitor aktivieren</button>{% endif %}
+    </form>
+    <form method="post" action="/sites/{{site.id}}/history/delete" onsubmit="return confirm('Komplette Historie inklusive Screenshots und Diff-Bilder löschen?')">
+      <button class="btn btn-outline-danger">Historie löschen</button>
+    </form>
+  </div>
 </div>
 
 {% if site.last_error %}<div class="alert alert-danger">{{site.last_error}}</div>{% endif %}
 
-<div class="card mb-4">
-  <div class="card-header">Monitor bearbeiten</div>
+<details class="card mb-4">
+  <summary class="card-header clickable-summary">Monitor bearbeiten</summary>
   <div class="card-body">
     <form method="post" action="/sites/{{site.id}}/edit">
       <h5>1. Allgemein</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-4"><label class="form-label">Name</label><input class="form-control" name="name" value="{{site.name}}"></div>
-        <div class="col-md-5"><label class="form-label">Webseite / URL</label><input class="form-control" name="url" value="{{site.url}}"></div>
-        <div class="col-md-3"><label class="form-label">Tags</label><input class="form-control" name="tags_csv" value="{{site.tags_csv}}"></div>
+        <div class="col-12 col-lg-4"><label class="form-label">Name</label><input class="form-control" name="name" value="{{site.name}}"></div>
+        <div class="col-12 col-lg-5"><label class="form-label">Webseite / URL</label><input class="form-control" name="url" value="{{site.url}}"></div>
+        <div class="col-12 col-lg-3"><label class="form-label">Tags</label><input class="form-control" name="tags_csv" value="{{site.tags_csv}}"></div>
       </div>
 
       <h5>2. Zeitplan</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3"><label class="form-label">Zeitplan-Typ</label><select class="form-select schedule-type" name="schedule_type"><option value="interval" {% if site.schedule_type=="interval" %}selected{% endif %}>Intervall</option><option value="cron" {% if site.schedule_type=="cron" %}selected{% endif %}>Cron</option></select></div>
-        <div class="col-md-3"><label class="form-label">Intervall in Sekunden</label><input class="form-control" name="interval_seconds" type="number" value="{{site.interval_seconds}}"></div>
-        <div class="col-md-6"><label class="form-label">Cron-Ausdruck</label><input class="form-control cron-expression" name="cron_expression" value="{{site.cron_expression}}" placeholder="*/10 * * * *"></div>
+        <div class="col-12 col-md-4 col-lg-3"><label class="form-label">Zeitplan-Typ</label><select class="form-select schedule-type" name="schedule_type"><option value="interval" {% if site.schedule_type=="interval" %}selected{% endif %}>Intervall</option><option value="cron" {% if site.schedule_type=="cron" %}selected{% endif %}>Cron</option></select></div>
+        <div class="col-12 col-md-4 col-lg-3"><label class="form-label">Intervall in Sekunden</label><input class="form-control" name="interval_seconds" type="number" value="{{site.interval_seconds}}"></div>
+        <div class="col-12 col-md-4 col-lg-6"><label class="form-label">Cron-Ausdruck</label><input class="form-control cron-expression" name="cron_expression" value="{{site.cron_expression}}" placeholder="*/10 * * * *"></div>
       </div>
 
-<div class="cron-helper mt-3 p-3 rounded border">
-  <h6>Cron-Generator</h6>
-  <div class="row g-2 align-items-end">
-    <div class="col-md-3">
-      <label class="form-label">Vorlage</label>
-      <select class="form-select cron-preset">
-        <option value="">Bitte wählen</option>
-        <option value="every_minutes">Alle X Minuten</option>
-        <option value="hourly_range">Stündlich im Zeitraum</option>
-        <option value="daily_time">Täglich um Uhrzeit</option>
-        <option value="weekdays_time">Mo-Fr um Uhrzeit</option>
-        <option value="weekdays_range">Mo-Fr stündlich im Zeitraum</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">X Minuten</label>
-      <input class="form-control cron-minutes" type="number" min="1" max="59" value="10">
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">Uhrzeit / Start</label>
-      <input class="form-control cron-hour-start" type="number" min="0" max="23" value="8">
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">Ende</label>
-      <input class="form-control cron-hour-end" type="number" min="0" max="23" value="18">
-    </div>
-    <div class="col-md-3">
-      <button type="button" class="btn btn-outline-info w-100 cron-apply">Cron übernehmen</button>
-    </div>
-  </div>
-  <div class="form-text mt-2">
-    Beispiele: <code>*/5 * * * *</code> alle 5 Minuten,
-    <code>0 8 * * *</code> täglich 08:00,
-    <code>0 10-22 * * 1-5</code> Mo-Fr jede volle Stunde von 10-22 Uhr.
-  </div>
-</div>
-
+      <div class="cron-helper mt-3 p-3 rounded border">
+        <h6>Cron-Generator</h6>
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Vorlage</label><select class="form-select cron-preset"><option value="">Bitte wählen</option><option value="every_minutes">Alle X Minuten</option><option value="hourly_range">Stündlich im Zeitraum</option><option value="daily_time">Täglich um Uhrzeit</option><option value="weekdays_time">Mo-Fr um Uhrzeit</option><option value="weekdays_range">Mo-Fr stündlich im Zeitraum</option></select></div>
+          <div class="col-6 col-md-2"><label class="form-label">X Minuten</label><input class="form-control cron-minutes" type="number" min="1" max="59" value="10"></div>
+          <div class="col-6 col-md-2"><label class="form-label">Start</label><input class="form-control cron-hour-start" type="number" min="0" max="23" value="8"></div>
+          <div class="col-6 col-md-2"><label class="form-label">Ende</label><input class="form-control cron-hour-end" type="number" min="0" max="23" value="18"></div>
+          <div class="col-12 col-xl-3"><button type="button" class="btn btn-outline-info w-100 cron-apply">Cron übernehmen</button></div>
+        </div>
+      </div>
 
       <h5 class="mt-4">3. Screenshot & Cookiebanner</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3"><label class="form-label">Cookie-Modus</label><select class="form-select" name="cookie_mode"><option value="auto" {% if site.cookie_mode=="auto" %}selected{% endif %}>Cookies auto</option><option value="click" {% if site.cookie_mode=="click" %}selected{% endif %}>nur klicken</option><option value="hide" {% if site.cookie_mode=="hide" %}selected{% endif %}>nur ausblenden</option><option value="off" {% if site.cookie_mode=="off" %}selected{% endif %}>aus</option></select></div>
-        <div class="col-md-3"><label class="form-label">Wartezeit nach Laden</label><input class="form-control" name="wait_seconds" type="number" value="{{site.wait_seconds}}"></div>
-        <div class="col-md-3"><label class="form-label">Screenshot-Breite</label><input class="form-control" name="viewport_width" type="number" value="{{site.viewport_width}}"></div>
-        <div class="col-md-3"><label class="form-label">Screenshot-Höhe</label><input class="form-control" name="viewport_height" type="number" value="{{site.viewport_height}}"></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Cookie-Modus</label><select class="form-select" name="cookie_mode"><option value="auto" {% if site.cookie_mode=="auto" %}selected{% endif %}>Cookies auto</option><option value="click" {% if site.cookie_mode=="click" %}selected{% endif %}>nur klicken</option><option value="hide" {% if site.cookie_mode=="hide" %}selected{% endif %}>nur ausblenden</option><option value="off" {% if site.cookie_mode=="off" %}selected{% endif %}>aus</option></select></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Wartezeit</label><input class="form-control" name="wait_seconds" type="number" value="{{site.wait_seconds}}"></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Breite</label><input class="form-control" name="viewport_width" type="number" value="{{site.viewport_width}}"></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Höhe</label><input class="form-control" name="viewport_height" type="number" value="{{site.viewport_height}}"></div>
       </div>
 
       <h5>4. Änderungserkennung</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3"><label class="form-label">Schwellenwert in Prozent</label><input class="form-control" name="threshold_percent" type="number" step="0.01" value="{{site.threshold_percent}}"></div>
-        <div class="col-md-9"><label class="form-label">Elemente ignorieren / ausblenden</label><input class="form-control" name="ignore_selectors" value="{{site.ignore_selectors}}" placeholder=".werbung, #banner"></div>
+        <div class="col-12 col-md-3"><label class="form-label">Schwellenwert in Prozent</label><input class="form-control" name="threshold_percent" type="number" step="0.01" value="{{site.threshold_percent}}"></div>
+        <div class="col-12 col-md-9"><label class="form-label">Elemente ignorieren / ausblenden</label><input class="form-control" name="ignore_selectors" value="{{site.ignore_selectors}}" placeholder=".werbung, #banner"></div>
       </div>
 
       <h5>5. Aktivierung</h5>
@@ -89,20 +69,33 @@
       <button class="btn btn-primary">Speichern</button>
     </form>
   </div>
+</details>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <form method="post" action="/sites/{{site.id}}/check"><button class="btn btn-primary" {% if not site.enabled %}disabled title="Monitor ist pausiert"{% endif %}>Jetzt prüfen</button></form>
+  <form method="post" action="/sites/{{site.id}}/reset-baseline"><button class="btn btn-warning">Baseline reset</button></form>
 </div>
 
-<form method="post" action="/sites/{{site.id}}/check" class="d-inline"><button class="btn btn-primary" {% if not site.enabled %}disabled{% endif %}>Jetzt prüfen</button></form>
-<form method="post" action="/sites/{{site.id}}/reset-baseline" class="d-inline"><button class="btn btn-warning">Baseline reset</button></form>
-
-<div class="row g-3 mt-3">
+<h2>Änderungshistorie</h2>
+<div class="row g-3 mt-1">
 {% for c in changes %}
-<div class="col-lg-4"><div class="card h-100"><div class="card-header">{{ c.checked_at|berlin_time }} · {{c.status}}</div><div class="card-body">
-<p>Diff: {{c.difference_percent}}% · {{c.duration_ms}}ms · HTTP {{c.http_status}}</p>
-<p>{{c.relevance_reason}}</p>
-{% if c.error %}<pre class="text-danger">{{c.error}}</pre>{% endif %}
-{% if c.screenshot_path %}<a href="{{c.screenshot_path}}" target="_blank"><img class="img-fluid rounded border" src="{{c.screenshot_path}}"></a>{% endif %}
-{% if c.diff_path %}<p class="mt-2"><a class="btn btn-sm btn-outline-danger" href="{{c.diff_path}}" target="_blank">Diff öffnen</a></p>{% endif %}
-</div></div></div>
+<div class="col-12 col-md-6 col-xxl-4">
+  <div class="card h-100">
+    <div class="card-header d-flex justify-content-between gap-2">
+      <span>{{ c.checked_at|berlin_time }} · {{c.status}}</span>
+      <form method="post" action="/changes/{{c.id}}/delete" onsubmit="return confirm('Diesen Eintrag inklusive Screenshot/Diff löschen?')"><button class="btn btn-sm btn-outline-danger">Löschen</button></form>
+    </div>
+    <div class="card-body">
+      <p>Diff: {{c.difference_percent}}% · {{c.duration_ms}}ms · HTTP {{c.http_status}}</p>
+      <p>{{c.relevance_reason}}</p>
+      {% if c.error %}<pre class="text-danger">{{c.error}}</pre>{% endif %}
+      {% if c.screenshot_path %}<a href="{{c.screenshot_path}}" target="_blank"><img class="img-fluid rounded border history-img" src="{{c.screenshot_path}}"></a>{% endif %}
+      {% if c.diff_path %}<p class="mt-2"><a class="btn btn-sm btn-outline-danger" href="{{c.diff_path}}" target="_blank">Diff öffnen</a></p>{% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="col-12"><div class="alert alert-secondary">Noch keine Historie vorhanden.</div></div>
 {% endfor %}
 </div>
 {% endif %}
