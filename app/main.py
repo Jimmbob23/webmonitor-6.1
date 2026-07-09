@@ -12,7 +12,15 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.auth import create_session_token, current_user, ensure_admin_user, hash_password, require_admin, require_login, verify_password
+from app.auth import (
+    create_session_token,
+    current_user,
+    ensure_admin_user,
+    hash_password,
+    require_admin,
+    require_login,
+    verify_password,
+)
 from app.config import settings
 from app.db import SessionLocal, get_db, init_db_with_retry
 from app.models import BackupEntry, Change, Folder, Site, User
@@ -20,47 +28,74 @@ from app.services.backups import create_config_backup, restore_config_backup
 from app.services.monitor import normalize_url, run_check
 from app.services.scheduler import scheduler, start_scheduler, sync_jobs
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db_with_retry()
+
     db = SessionLocal()
     try:
         ensure_admin_user(db)
     finally:
         db.close()
+
     start_scheduler()
+
     yield
+
     if scheduler.running:
         scheduler.shutdown(wait=False)
 
-app = FastAPI(title="Web Monitor Enterprise 6.1", version="6.1.1", lifespan=lifespan)
+
+app = FastAPI(title="Web Monitor Enterprise 6.1.1", version="6.1.1", lifespan=lifespan)
+
 app.mount("/data", StaticFiles(directory=str(settings.data_dir)), name="data")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
 
+
 def berlin_time(value):
     if not value:
         return ""
+
     if isinstance(value, str):
         try:
             value = datetime.fromisoformat(value)
         except Exception:
             return value
 
-    # Datenbank-Zeiten sind bisher meist naive UTC-Zeiten.
-    # Deshalb: naive Werte als UTC interpretieren und für die Anzeige nach Berlin konvertieren.
     if value.tzinfo is None:
         value = value.replace(tzinfo=ZoneInfo("UTC"))
 
     return value.astimezone(ZoneInfo("Europe/Berlin")).strftime("%d.%m.%Y %H:%M:%S")
 
+
 templates.env.filters["berlin_time"] = berlin_time
+
+
+def _delete_public_data_file(public_path: str):
+    if not public_path:
+        return
+
+    if not public_path.startswith("/data/"):
+        return
+
+    try:
+        relative = public_path.replace("/data/", "", 1)
+        file_path = (settings.data_dir / relative).resolve()
+        data_dir = settings.data_dir.resolve()
+
+        if data_dir in file_path.parents and file_path.is_file():
+            file_path.unlink(missing_ok=True)
+    except Exception:
+        pass
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "app": "enterprise-6.1"}
+    return {"status": "ok", "app": "enterprise-6.1.1"}
+
 
 @app.get("/api/stats")
 def api_stats(db: Session = Depends(get_db)):
@@ -71,22 +106,37 @@ def api_stats(db: Session = Depends(get_db)):
         "errors": db.query(Change).filter(Change.status == "error").count(),
     }
 
+
 @app.get("/api/sites")
 def api_sites(db: Session = Depends(get_db)):
     return db.query(Site).order_by(Site.id).all()
+
 
 @app.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": ""})
 
+
 @app.post("/login")
-def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+def login(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+):
     user = db.query(User).filter(User.username == username, User.active == True).first()
+
     if not user or not verify_password(password, user.password_hash):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Ungültiger Login"}, status_code=401)
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Ungültiger Login"},
+            status_code=401,
+        )
+
     response = RedirectResponse("/", status_code=303)
     response.set_cookie("session", create_session_token(username), httponly=True, samesite="lax")
     return response
+
 
 @app.get("/logout")
 def logout():
@@ -94,33 +144,56 @@ def logout():
     response.delete_cookie("session")
     return response
 
+
 @app.get("/")
 def dashboard(request: Request, q: str = "", db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     query = db.query(Site)
+
     if q.strip():
         like = f"%{q.strip()}%"
         query = query.filter(or_(Site.name.ilike(like), Site.url.ilike(like), Site.tags_csv.ilike(like)))
+
     sites = query.order_by(Site.id.desc()).all()
     changes = db.query(Change).order_by(Change.id.desc()).limit(50).all()
+
     stats = {
         "sites": db.query(Site).count(),
         "enabled": db.query(Site).filter(Site.enabled == True).count(),
         "changed": db.query(Change).filter(Change.status == "changed").count(),
         "errors": db.query(Change).filter(Change.status == "error").count(),
     }
-    return templates.TemplateResponse("index.html", {"request": request, "sites": sites, "changes": changes, "stats": stats, "q": q, "user": current_user(request, db)})
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "sites": sites,
+            "changes": changes,
+            "stats": stats,
+            "q": q,
+            "user": current_user(request, db),
+        },
+    )
+
 
 @app.get("/sites/{site_id}")
 def site_detail(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
-    changes = db.query(Change).filter(Change.site_id == site_id).order_by(Change.id.desc()).limit(100).all()
-    return templates.TemplateResponse("site.html", {"request": request, "site": site, "changes": changes})
+    changes = db.query(Change).filter(Change.site_id == site_id).order_by(Change.id.desc()).limit(200).all()
+
+    return templates.TemplateResponse(
+        "site.html",
+        {"request": request, "site": site, "changes": changes},
+    )
+
 
 @app.post("/sites")
 def create_site(
@@ -143,13 +216,16 @@ def create_site(
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     folder = None
+
     if folder_name.strip():
         folder = db.query(Folder).filter(Folder.name == folder_name.strip()).first()
         if not folder:
             folder = Folder(name=folder_name.strip())
             db.add(folder)
             db.flush()
+
     site = Site(
         name=name.strip() or normalize_url(url),
         url=normalize_url(url),
@@ -166,10 +242,14 @@ def create_site(
         cookie_mode=cookie_mode,
         enabled=True,
     )
+
     db.add(site)
     db.commit()
+
     sync_jobs()
+
     return RedirectResponse("/", status_code=303)
+
 
 @app.post("/sites/{site_id}/edit")
 def edit_site(
@@ -193,7 +273,9 @@ def edit_site(
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
+
     if site:
         site.name = name.strip() or normalize_url(url)
         site.url = normalize_url(url)
@@ -208,119 +290,237 @@ def edit_site(
         site.ignore_selectors = ignore_selectors.strip()
         site.cookie_mode = cookie_mode
         site.enabled = enabled == "on"
+
         if not site.enabled:
             site.last_status = "paused"
         elif site.last_status == "paused":
             site.last_status = "enabled"
+
         db.commit()
+
     sync_jobs()
+
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
 
 @app.post("/sites/{site_id}/toggle")
 def toggle_site(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
+
     if site:
         site.enabled = not site.enabled
         site.last_status = "enabled" if site.enabled else "paused"
         db.commit()
+
     sync_jobs()
+
     referer = request.headers.get("referer") or "/"
     return RedirectResponse(referer, status_code=303)
+
 
 @app.post("/sites/{site_id}/check")
 def manual_check(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
+
     if site and site.enabled:
         run_check(db, site_id)
+
     sync_jobs()
+
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
 
 @app.post("/sites/{site_id}/delete")
 def delete_site(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
+
     if site:
+        for change in list(site.changes):
+            _delete_public_data_file(change.screenshot_path)
+            _delete_public_data_file(change.diff_path)
+
         db.delete(site)
         db.commit()
+
     sync_jobs()
+
     return RedirectResponse("/", status_code=303)
+
 
 @app.post("/sites/{site_id}/reset-baseline")
 def reset_baseline(site_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_login(request, db)
     if redirect:
         return redirect
+
     site = db.get(Site, site_id)
+
     if site:
         site.baseline_path = ""
         site.last_status = "baseline reset"
         site.last_error = ""
         db.commit()
+
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
+
+@app.post("/changes/{change_id}/delete")
+def delete_change(change_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = require_login(request, db)
+    if redirect:
+        return redirect
+
+    change = db.get(Change, change_id)
+    site_id = None
+
+    if change:
+        site_id = change.site_id
+        _delete_public_data_file(change.screenshot_path)
+        _delete_public_data_file(change.diff_path)
+        db.delete(change)
+        db.commit()
+
+    if site_id:
+        return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/sites/{site_id}/history/delete")
+def delete_site_history(site_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = require_login(request, db)
+    if redirect:
+        return redirect
+
+    site = db.get(Site, site_id)
+
+    if site:
+        for change in list(site.changes):
+            _delete_public_data_file(change.screenshot_path)
+            _delete_public_data_file(change.diff_path)
+            db.delete(change)
+
+        site.baseline_path = ""
+        site.last_status = "history cleared"
+        site.last_error = ""
+        db.commit()
+        sync_jobs()
+
+    return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
 
 @app.get("/admin/users")
 def users_page(request: Request, db: Session = Depends(get_db)):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
-    return templates.TemplateResponse("users.html", {"request": request, "users": db.query(User).order_by(User.id).all()})
+
+    return templates.TemplateResponse(
+        "users.html",
+        {"request": request, "users": db.query(User).order_by(User.id).all()},
+    )
+
 
 @app.post("/admin/users")
-def create_user(request: Request, username: str = Form(...), password: str = Form(...), role: str = Form("user"), db: Session = Depends(get_db)):
+def create_user(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form("user"),
+    db: Session = Depends(get_db),
+):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
+
     db.add(User(username=username.strip(), password_hash=hash_password(password), role=role, active=True))
     db.commit()
+
     return RedirectResponse("/admin/users", status_code=303)
+
 
 @app.get("/backups")
 def backups_page(request: Request, db: Session = Depends(get_db)):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
+
     backups = db.query(BackupEntry).order_by(BackupEntry.id.desc()).all()
-    return templates.TemplateResponse("backups.html", {"request": request, "backups": backups, "message": ""})
+
+    return templates.TemplateResponse(
+        "backups.html",
+        {"request": request, "backups": backups, "message": ""},
+    )
+
 
 @app.post("/backups/create")
 def backup_create(request: Request, db: Session = Depends(get_db)):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
+
     create_config_backup(db)
+
     return RedirectResponse("/backups", status_code=303)
+
 
 @app.get("/backups/{backup_id}/download")
 def backup_download(backup_id: int, request: Request, db: Session = Depends(get_db)):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
+
     backup = db.get(BackupEntry, backup_id)
+
     if not backup:
         return RedirectResponse("/backups", status_code=303)
+
     return FileResponse(settings.backup_dir / backup.filename, filename=backup.filename, media_type="text/csv")
 
+
 @app.post("/backups/restore")
-async def backup_restore(request: Request, file: UploadFile = File(...), replace_existing: str | None = Form(None), db: Session = Depends(get_db)):
+async def backup_restore(
+    request: Request,
+    file: UploadFile = File(...),
+    replace_existing: str | None = Form(None),
+    db: Session = Depends(get_db),
+):
     redirect = require_admin(request, db)
     if redirect:
         return redirect
+
     suffix = Path(file.filename or "restore.csv").suffix or ".csv"
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp_path = Path(tmp.name)
         shutil.copyfileobj(file.file, tmp)
+
     try:
         count = restore_config_backup(db, tmp_path, replace_existing=(replace_existing == "on"))
     finally:
         tmp_path.unlink(missing_ok=True)
+
     sync_jobs()
+
     backups = db.query(BackupEntry).order_by(BackupEntry.id.desc()).all()
-    return templates.TemplateResponse("backups.html", {"request": request, "backups": backups, "message": f"{count} Monitor(e) wiederhergestellt."})
+
+    return templates.TemplateResponse(
+        "backups.html",
+        {
+            "request": request,
+            "backups": backups,
+            "message": f"{count} Monitor(e) wiederhergestellt.",
+        },
+    )
