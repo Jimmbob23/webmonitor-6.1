@@ -1,97 +1,227 @@
 /* =========================================================
-   Web Monitor Enterprise - app.css (Darkmode verbessert)
+   Web Monitor Enterprise
+   Bootstrap 5.3 Light-/Darkmode
    ========================================================= */
 
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --text: #111111;
-  --border: #d1d5db;
-  --card: #ffffff;
-  --hover: #f3f4f6;
+  --wm-bg: #f8fafc;
+  --wm-surface: #ffffff;
+  --wm-surface-hover: #f1f5f9;
+  --wm-text: #111827;
+  --wm-muted: #64748b;
+  --wm-border: #d1d5db;
+  --wm-link: #2563eb;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f172a;
-    --bg-secondary: #111827;
-    --text: #ffffff;
-    --border: #374151;
-    --card: #111827;
-    --hover: #1f2937;
-  }
+html[data-bs-theme="dark"] {
+  --wm-bg: #020617;
+  --wm-surface: #111827;
+  --wm-surface-hover: #1f2937;
+  --wm-text: #ffffff;
+  --wm-muted: #94a3b8;
+  --wm-border: #374151;
+  --wm-link: #93c5fd;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--wm-bg) !important;
+  color: var(--wm-text) !important;
 }
 
-/* Karten */
+a {
+  color: var(--wm-link);
+}
+
+/* Navigation */
+.navbar {
+  border-bottom: 1px solid var(--wm-border);
+}
+
+.beta-banner {
+  background: #f59e0b;
+  color: #111827;
+  padding: 0.45rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Karten und Statistik */
 .card,
+.card-header,
+.card-footer,
+.stat,
+.cron-helper,
 .monitor-card,
 .site-card {
-  background: var(--card) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border);
+  background: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+  border-color: var(--wm-border) !important;
 }
 
-/* Tabellen / Monitorlisten */
-table,
+.stat {
+  padding: 1rem;
+  border: 1px solid var(--wm-border);
+  border-radius: 0.5rem;
+}
+
+.stat strong {
+  font-size: 2rem;
+}
+
+/* Bootstrap-Tabellen vollständig überschreiben */
 .table,
-.table-darkish,
-.table thead,
-.table tbody,
-.table tr,
-.table th,
-.table td,
-.table-darkish thead,
-.table-darkish tbody,
-.table-darkish tr,
-.table-darkish th,
-.table-darkish td {
-  background: var(--card) !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
+.table-darkish {
+  --bs-table-color: var(--wm-text) !important;
+  --bs-table-bg: var(--wm-surface) !important;
+  --bs-table-border-color: var(--wm-border) !important;
+  --bs-table-accent-bg: transparent !important;
+  --bs-table-striped-color: var(--wm-text) !important;
+  --bs-table-striped-bg: var(--wm-surface) !important;
+  --bs-table-active-color: var(--wm-text) !important;
+  --bs-table-active-bg: var(--wm-surface-hover) !important;
+  --bs-table-hover-color: var(--wm-text) !important;
+  --bs-table-hover-bg: var(--wm-surface-hover) !important;
+
+  background: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+  border-color: var(--wm-border) !important;
 }
 
-.table tbody tr:hover,
-.table tbody tr:hover td,
-.table-darkish tbody tr:hover,
-.table-darkish tbody tr:hover td {
-  background: var(--hover) !important;
+.table > :not(caption) > * > *,
+.table-darkish > :not(caption) > * > * {
+  background-color: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+  border-color: var(--wm-border) !important;
+  box-shadow: none !important;
+}
+
+.table tbody tr:hover > *,
+.table-darkish tbody tr:hover > * {
+  background-color: var(--wm-surface-hover) !important;
+  color: var(--wm-text) !important;
 }
 
 .table a,
 .table-darkish a {
-  color: #93c5fd !important;
+  color: var(--wm-link) !important;
 }
 
-/* Eingabefelder */
+/* Zusätzliche Bootstrap-Klassen */
+html[data-bs-theme="dark"] .table-light,
+html[data-bs-theme="dark"] .table-secondary,
+html[data-bs-theme="dark"] .bg-light,
+html[data-bs-theme="dark"] .bg-white {
+  --bs-table-bg: var(--wm-surface) !important;
+  --bs-table-color: var(--wm-text) !important;
+  background-color: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+}
+
+/* Formulare */
+.form-control,
+.form-select,
 input,
 select,
 textarea {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+  border-color: var(--wm-border) !important;
 }
 
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--wm-muted) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
 input:focus,
 select:focus,
 textarea:focus {
-  outline: none;
-  border-color: #60a5fa;
+  background: var(--wm-surface) !important;
+  color: var(--wm-text) !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.2) !important;
 }
 
-/* Navigation */
-.navbar,
-.sidebar {
-  background: var(--bg-secondary);
-  color: var(--text);
+.form-text,
+.text-secondary,
+.text-muted {
+  color: var(--wm-muted) !important;
 }
 
-/* Buttons */
-.btn-outline-secondary {
-  border-color: var(--border);
-  color: var(--text);
+/* Einklappbare Bereiche */
+.clickable-summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.clickable-summary::-webkit-details-marker {
+  display: none;
+}
+
+.clickable-summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+details[open] > .clickable-summary::before {
+  transform: rotate(90deg);
+}
+
+.history-img {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+pre {
+  white-space: pre-wrap;
+  color: var(--wm-text);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.login-card {
+  width: min(420px, 92vw);
+}
+
+.weekday-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .navbar .container-fluid,
+  .navbar .d-flex {
+    flex-wrap: wrap;
+  }
+
+  .weekday-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .stat strong {
+    font-size: 1.4rem;
+  }
 }
