@@ -1,46 +1,97 @@
+/* =========================================================
+   Web Monitor Enterprise - app.css (Darkmode verbessert)
+   ========================================================= */
+
 :root {
-  color-scheme: light dark;
-  --bg: #f8fafc;
-  --text: #111827;
-  --card: #ffffff;
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text: #111111;
   --border: #d1d5db;
-  --muted: #64748b;
-  --input: #ffffff;
-  --input-text: #111827;
-  --link: #2563eb;
+  --card: #ffffff;
+  --hover: #f3f4f6;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111827;
-    --text: #e5e7eb;
-    --card: #1f2937;
+    --bg: #0f172a;
+    --bg-secondary: #111827;
+    --text: #ffffff;
     --border: #374151;
-    --muted: #94a3b8;
-    --input: #111827;
-    --input-text: #e5e7eb;
-    --link: #93c5fd;
+    --card: #111827;
+    --hover: #1f2937;
   }
 }
 
-body{background:var(--bg);color:var(--text)}
-a{color:var(--link)}
-.card,.table-darkish,.stat,.cron-helper{background:var(--card);color:var(--text);border:1px solid var(--border)}
-.card-header{background:var(--card);border-color:var(--border)}
-.form-control,.form-select{background:var(--input);color:var(--input-text);border-color:var(--border)}
-.form-control:focus,.form-select:focus{background:var(--input);color:var(--input-text)}
-.form-text,.text-secondary{color:var(--muted)!important}
-.stat{padding:1rem;border-radius:.5rem}
-.stat strong{font-size:2rem}
-.login-page{min-height:100vh;display:grid;place-items:center}
-.login-card{width:min(420px,92vw)}
-.badge.status-never{background:#6b7280}
-.badge.status-baseline{background:#06b6d4}
-.badge.status-unchanged{background:#16a34a}
-.badge.status-changed{background:#dc2626}
-.badge.status-error{background:#f97316}
-.badge.status-paused{background:#64748b}
-.badge.status-enabled{background:#22c55e}
-.badge.status-baseline-reset{background:#facc15;color:#111827}
-pre{white-space:pre-wrap}
-code{color:inherit}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Karten */
+.card,
+.monitor-card,
+.site-card {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border);
+}
+
+/* Tabellen / Monitorlisten */
+table,
+.table,
+.table-darkish,
+.table thead,
+.table tbody,
+.table tr,
+.table th,
+.table td,
+.table-darkish thead,
+.table-darkish tbody,
+.table-darkish tr,
+.table-darkish th,
+.table-darkish td {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.table tbody tr:hover,
+.table tbody tr:hover td,
+.table-darkish tbody tr:hover,
+.table-darkish tbody tr:hover td {
+  background: var(--hover) !important;
+}
+
+.table a,
+.table-darkish a {
+  color: #93c5fd !important;
+}
+
+/* Eingabefelder */
+input,
+select,
+textarea {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #60a5fa;
+}
+
+/* Navigation */
+.navbar,
+.sidebar {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+/* Buttons */
+.btn-outline-secondary {
+  border-color: var(--border);
+  color: var(--text);
+}
