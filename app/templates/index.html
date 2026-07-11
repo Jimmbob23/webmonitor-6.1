@@ -15,23 +15,15 @@
 </form>
 
 <h2>Angelegte Monitore</h2>
-<table class="table table-darkish align-middle mb-4">
-<thead>
-<tr>
-  <th>Name</th>
-  <th>URL</th>
-  <th>Tags</th>
-  <th>Plan</th>
-  <th>Status</th>
-  <th>Antwort</th>
-  <th>Aktionen</th>
-</tr>
-</thead>
+<div class="table-responsive mb-4">
+<table class="table table-darkish align-middle">
+<thead><tr><th>Name</th><th>URL</th><th>Tags</th><th>Plan</th><th>Status</th><th>Antwort</th><th>Aktionen</th></tr></thead>
 <tbody>
 {% for s in sites %}
 <tr class="{% if not s.enabled %}opacity-50{% endif %}">
   <td>
     <a href="/sites/{{s.id}}">{{s.name}}</a>
+    {% if s.unread_change %}<span class="badge text-bg-danger ms-1">Änderung offen</span>{% endif %}
     {% if not s.enabled %}<span class="badge text-bg-secondary ms-1">pausiert</span>{% endif %}
   </td>
   <td class="text-break">{{s.url}}</td>
@@ -40,184 +32,153 @@
   <td><span class="badge status-{{s.last_status|replace(' ', '-')}}">{{s.last_status}}</span></td>
   <td>{{s.last_duration_ms}} ms / HTTP {{s.last_http_status}}</td>
   <td class="text-nowrap">
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/check">
-      <button class="btn btn-sm btn-outline-primary" {% if not s.enabled %}disabled{% endif %}>Prüfen</button>
-    </form>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/toggle">
-      {% if s.enabled %}
-      <button class="btn btn-sm btn-outline-warning">Pausieren</button>
-      {% else %}
-      <button class="btn btn-sm btn-outline-success">Aktivieren</button>
-      {% endif %}
-    </form>
-    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')">
-      <button class="btn btn-sm btn-outline-danger">Löschen</button>
-    </form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/check"><button class="btn btn-sm btn-outline-primary" {% if not s.enabled %}disabled{% endif %}>Prüfen</button></form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/toggle">{% if s.enabled %}<button class="btn btn-sm btn-outline-warning">Pausieren</button>{% else %}<button class="btn btn-sm btn-outline-success">Aktivieren</button>{% endif %}</form>
+    <form class="d-inline" method="post" action="/sites/{{s.id}}/delete" onsubmit="return confirm('Löschen?')"><button class="btn btn-sm btn-outline-danger">Löschen</button></form>
   </td>
 </tr>
 {% else %}
-<tr>
-  <td colspan="7" class="text-muted">Noch keine Monitore angelegt.</td>
-</tr>
+<tr><td colspan="7" class="text-muted">Noch keine Monitore angelegt.</td></tr>
 {% endfor %}
 </tbody>
 </table>
+</div>
 
-<div class="card mb-4">
-  <div class="card-header">Neue Webseite überwachen</div>
+<details class="card mb-4">
+  <summary class="card-header clickable-summary">Neue Webseite konfigurieren</summary>
   <div class="card-body">
     <form method="post" action="/sites">
       <h5>1. Allgemein</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <label class="form-label">Name</label>
-          <input class="form-control" name="name" placeholder="z. B. SVBWL">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Webseite / URL</label>
-          <input class="form-control" name="url" placeholder="z. B. svbwl.de" required>
-          <div class="form-text text-secondary">https:// wird automatisch ergänzt.</div>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Ordner</label>
-          <input class="form-control" name="folder_name" placeholder="z. B. Behörden">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Tags</label>
-          <input class="form-control" name="tags_csv" placeholder="z. B. Schule, Termine">
-        </div>
+        <div class="col-12 col-lg-3"><label class="form-label">Name</label><input class="form-control" name="name" placeholder="z. B. SVBWL"></div>
+        <div class="col-12 col-lg-4"><label class="form-label">Webseite / URL</label><input class="form-control" name="url" placeholder="z. B. svbwl.de" required></div>
+        <div class="col-12 col-md-6 col-lg-2"><label class="form-label">Ordner</label><input class="form-control" name="folder_name" placeholder="z. B. Behörden"></div>
+        <div class="col-12 col-md-6 col-lg-3"><label class="form-label">Tags</label><input class="form-control" name="tags_csv" placeholder="z. B. Schule, Termine"></div>
       </div>
 
       <h5>2. Zeitplan</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <label class="form-label">Zeitplan-Typ</label>
-          <select class="form-select schedule-type" name="schedule_type">
-            <option value="interval">Intervall</option>
-            <option value="cron">Cron</option>
-          </select>
-          <div class="form-text text-secondary">Für feste Zeiten „Cron“ auswählen.</div>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Intervall in Sekunden</label>
-          <input class="form-control" name="interval_seconds" type="number" value="300">
-          <div class="form-text text-secondary">Nur bei Intervall. Minimum 60 Sekunden.</div>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Cron-Ausdruck</label>
-          <input class="form-control cron-expression" name="cron_expression" placeholder="*/10 * * * *">
-          <div class="form-text text-secondary">Wird automatisch vom Cron-Generator befüllt oder manuell eingetragen.</div>
-        </div>
+        <div class="col-12 col-md-4"><label class="form-label">Zeitplan-Typ</label><select class="form-select schedule-type" name="schedule_type"><option value="interval">Intervall</option><option value="cron">Cron</option></select></div>
+        <div class="col-12 col-md-4"><label class="form-label">Intervall in Sekunden</label><input class="form-control" name="interval_seconds" type="number" value="300"></div>
+        <div class="col-12 col-md-4"><label class="form-label">Cron-Ausdruck</label><input class="form-control cron-expression" name="cron_expression" placeholder="*/10 * * * *"></div>
       </div>
 
-      <div class="cron-helper mt-3 p-3 rounded border">
-        <h6>Cron-Generator</h6>
-        <div class="row g-2 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label">Vorlage</label>
-            <select class="form-select cron-preset">
-              <option value="">Bitte wählen</option>
-              <option value="every_minutes">Alle X Minuten</option>
-              <option value="hourly_range">Stündlich im Zeitraum</option>
-              <option value="daily_time">Täglich um Uhrzeit</option>
-              <option value="weekdays_time">Mo-Fr um Uhrzeit</option>
-              <option value="weekdays_range">Mo-Fr stündlich im Zeitraum</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">X Minuten</label>
-            <input class="form-control cron-minutes" type="number" min="1" max="59" value="10">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Uhrzeit / Start</label>
-            <input class="form-control cron-hour-start" type="number" min="0" max="23" value="8">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Ende</label>
-            <input class="form-control cron-hour-end" type="number" min="0" max="23" value="18">
-          </div>
-          <div class="col-md-3">
-            <button type="button" class="btn btn-outline-info w-100 cron-apply">Cron übernehmen</button>
-          </div>
-        </div>
-        <div class="form-text mt-2">
-          Beispiele:
-          <code>*/5 * * * *</code> alle 5 Minuten,
-          <code>0 8 * * *</code> täglich 08:00,
-          <code>0 10-22 * * 1-5</code> Mo-Fr jede volle Stunde von 10-22 Uhr.
-        </div>
-      </div>
+
+<div class="cron-helper mt-3 p-3 rounded border">
+  <h6>Erweiterter Cron-Generator</h6>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-4">
+      <label class="form-label">Vorlage</label>
+      <select class="form-select cron-preset">
+        <option value="">Bitte wählen</option>
+        <option value="every_minutes">Alle X Minuten</option>
+        <option value="hourly_range">Stündlich im Zeitraum</option>
+        <option value="daily_time">Täglich um Uhrzeit</option>
+        <option value="weekly_time">Wöchentlich an einem Tag</option>
+        <option value="selected_weekdays">An bestimmten Wochentagen</option>
+        <option value="selected_weekdays_hours">Bestimmte Tage und mehrere Uhrzeiten</option>
+        <option value="monthly_days">An bestimmten Tagen im Monat</option>
+        <option value="custom">Benutzerdefiniert</option>
+      </select>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label">X Minuten</label>
+      <input class="form-control cron-minutes" type="number" min="1" max="59" value="10">
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label">Startstunde</label>
+      <input class="form-control cron-hour-start" type="number" min="0" max="23" value="8">
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label">Endstunde</label>
+      <input class="form-control cron-hour-end" type="number" min="0" max="23" value="18">
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label">Minute</label>
+      <input class="form-control cron-minute-fixed" type="number" min="0" max="59" value="0">
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <label class="form-label">Wochentage</label>
+    <div class="weekday-grid">
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="1"><span class="form-check-label">Montag</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="2"><span class="form-check-label">Dienstag</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="3"><span class="form-check-label">Mittwoch</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="4"><span class="form-check-label">Donnerstag</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="5"><span class="form-check-label">Freitag</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="6"><span class="form-check-label">Samstag</span></label>
+      <label class="form-check"><input class="form-check-input cron-weekday" type="checkbox" value="0"><span class="form-check-label">Sonntag</span></label>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-1">
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Mehrere Uhrzeiten</label>
+      <input class="form-control cron-hours-list" placeholder="z. B. 8,12,18">
+      <div class="form-text">Nur Stunden, kommasepariert.</div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <label class="form-label">Tage im Monat</label>
+      <input class="form-control cron-month-days" placeholder="z. B. 1,15,28">
+      <div class="form-text">Nur Kalendertage 1 bis 31, kommasepariert.</div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column flex-md-row gap-2 mt-3">
+    <button type="button" class="btn btn-outline-info cron-apply">Cron übernehmen</button>
+    <button type="button" class="btn btn-outline-secondary cron-preview">Vorschau aktualisieren</button>
+  </div>
+
+  <div class="cron-preview-box mt-3">
+    <strong>Vorschau:</strong>
+    <code class="cron-preview-value">Noch keine Auswahl</code>
+  </div>
+
+  <div class="form-text mt-2">
+    Beispiele:
+    <code>0 10 * * 1</code> jeden Montag 10:00,
+    <code>0 8,12,18 * * 1,3,5</code> Mo/Mi/Fr um 08:00, 12:00 und 18:00,
+    <code>0 10 1,15 * *</code> am 1. und 15. jedes Monats um 10:00.
+  </div>
+</div>
+
 
       <h5 class="mt-4">3. Screenshot & Cookiebanner</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <label class="form-label">Cookie-Modus</label>
-          <select class="form-select" name="cookie_mode">
-            <option value="auto">Cookies auto</option>
-            <option value="click">nur klicken</option>
-            <option value="hide">nur ausblenden</option>
-            <option value="off">aus</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Wartezeit nach Laden</label>
-          <input class="form-control" name="wait_seconds" type="number" value="2">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Screenshot-Breite</label>
-          <input class="form-control" name="viewport_width" type="number" value="1440">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Screenshot-Höhe</label>
-          <input class="form-control" name="viewport_height" type="number" value="1200">
-        </div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Cookie-Modus</label><select class="form-select" name="cookie_mode"><option value="auto">Cookies auto</option><option value="click">nur klicken</option><option value="hide">nur ausblenden</option><option value="off">aus</option></select></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Wartezeit</label><input class="form-control" name="wait_seconds" type="number" value="2"></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Breite</label><input class="form-control" name="viewport_width" type="number" value="1440"></div>
+        <div class="col-12 col-md-6 col-xl-3"><label class="form-label">Höhe</label><input class="form-control" name="viewport_height" type="number" value="1200"></div>
       </div>
 
       <h5>4. Änderungserkennung</h5>
       <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <label class="form-label">Schwellenwert in Prozent</label>
-          <input class="form-control" name="threshold_percent" type="number" step="0.01" value="0.50">
-        </div>
-        <div class="col-md-9">
-          <label class="form-label">Elemente ignorieren / ausblenden</label>
-          <input class="form-control" name="ignore_selectors" placeholder=".werbung, #banner, .newsletter">
-          <div class="form-text text-secondary">CSS-Selektoren kommasepariert.</div>
-        </div>
+        <div class="col-12 col-md-3"><label class="form-label">Schwellenwert in Prozent</label><input class="form-control" name="threshold_percent" type="number" step="0.01" value="0.50"></div>
+        <div class="col-12 col-md-9"><label class="form-label">Elemente ignorieren</label><input class="form-control" name="ignore_selectors" placeholder=".werbung, #banner"></div>
       </div>
 
       <button class="btn btn-primary">Monitor anlegen</button>
     </form>
   </div>
-</div>
+</details>
 
 <h2>Letzte Ereignisse</h2>
+<div class="table-responsive">
 <table class="table table-darkish">
-<thead>
-<tr>
-  <th>Zeit</th>
-  <th>Seite</th>
-  <th>Status</th>
-  <th>Diff</th>
-  <th>Relevanz</th>
-</tr>
-</thead>
+<thead><tr><th>Zeit</th><th>Seite</th><th>Status</th><th>Diff</th><th>Relevanz</th></tr></thead>
 <tbody>
 {% for c in changes %}
-<tr>
-  <td>{{ c.checked_at|berlin_time }}</td>
-  <td>{{c.site.name}}</td>
-  <td>{{c.status}}</td>
-  <td>{{c.difference_percent}}%</td>
-  <td>{{c.relevance_reason}}</td>
-</tr>
-{% else %}
-<tr>
-  <td colspan="5" class="text-muted">Noch keine Ereignisse vorhanden.</td>
-</tr>
+<tr><td>{{ c.checked_at|berlin_time }}</td><td>{{c.site.name}}</td><td>{{c.status}}</td><td>{{c.difference_percent}}%</td><td>{{c.relevance_reason}}</td></tr>
 {% endfor %}
 </tbody>
 </table>
+</div>
 
 <script src="/static/cron-generator.js"></script>
 {% endblock %}

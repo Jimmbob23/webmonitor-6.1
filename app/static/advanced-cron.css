@@ -1,0 +1,14 @@
+.clickable-summary{cursor:pointer;list-style:none}
+.clickable-summary::-webkit-details-marker{display:none}
+.clickable-summary::before{content:"▸ ";display:inline-block;transition:transform .15s ease}
+details[open]>.clickable-summary::before{transform:rotate(90deg)}
+.weekday-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem 1rem}
+.cron-preview-box{padding:.75rem;border:1px dashed var(--border,#6b7280);border-radius:.5rem}
+.history-img{max-height:520px;object-fit:contain;width:100%}
+
+@media (max-width: 768px){
+  .weekday-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .navbar .d-flex{flex-wrap:wrap}
+  h1,.h1{font-size:1.55rem}
+  h2,.h2{font-size:1.25rem}
+}
